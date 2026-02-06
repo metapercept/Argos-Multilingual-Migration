@@ -61,7 +61,7 @@ module.exports = async function mainMethod(filePath, stats, userId) {
 
     // Run TOC Delayring - ./xslt/Delayring.xsl
     try {
-      const sefFile = await cacheSEFFile2("./xslt/Delayring.xsl");
+      const sefFile = await cacheSEFFile2("./xslt/Delayering.xsl");
       await performTransformationOUTPUT(sefFile, fileData, base);
     } catch (tocError) {
       console.error("Error in TOC Delayring transformation", tocError);

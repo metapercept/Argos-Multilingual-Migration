@@ -8,6 +8,7 @@
     exclude-result-prefixes="xs"
     version="3.0">
     
+    <xsl:strip-space elements="*"/>
     
     <xsl:template match="@*|node()">
         <xsl:copy copy-namespaces="no">
@@ -16,7 +17,7 @@
     </xsl:template>
     <xsl:template match="@class"/>
     
-    <xsl:output doctype-public="-//CROWN//DTD DITA Crown Task//EN" doctype-system="crown-task.dtd"
+    <xsl:output doctype-public="-//OASIS//DTD DITA Task//EN" doctype-system="task.dtd"
         indent="yes"/>
     
 
@@ -24,11 +25,11 @@
 
     <!-- Match root -->
     <xsl:template match="topic[@base='task']">
-        <crown-task>
+        <task>
             <!--<xsl:copy-of select="namespace::*"/>-->
             <xsl:apply-templates select="@* except @base"/>
             <xsl:apply-templates select="node()"/>
-        </crown-task>
+        </task>
     </xsl:template>
 
     <!-- Match body -->
@@ -62,9 +63,9 @@
                     </xsl:for-each>
 
                     <xsl:if test="$after">
-                        <info>
+                        <result>
                             <xsl:apply-templates select="$after"></xsl:apply-templates>
-                        </info>
+                        </result>
                     </xsl:if>
                 </xsl:when>
                 <xsl:when test="child::*[  self::p ] and count(child::*[ self::p ]) = count(child::*[ self::*])">
@@ -91,8 +92,17 @@
         </steps>
     </xsl:template>
 
-    <xsl:param name="unallowedInCmd" select="('codeblock', 'div', 'dl', 'equation-block', 'equation-figure', 'fig', 'hazardstatement', 'imagemap',
-     'itemgroup', 'note', 'lines', 'lq', 'msgblock', 'ol', 'p', 'pre', 'screen', 'simpletable', 'sl', 'syntaxdiagram', 'table', 'ul')"/>
+    <!--<xsl:param name="unallowedInCmd" select="('codeblock', 'div', 'dl', 'equation-block', 'equation-figure', 'fig', 'hazardstatement', 'imagemap',
+     'itemgroup', 'note', 'lines', 'lq', 'msgblock', 'ol', 'p', 'pre', 'screen', 'simpletable', 'sl', 'syntaxdiagram', 'table', 'ul')"/>-->
+
+    <xsl:param name="unallowedInCmd"
+        select="(
+        'codeblock','div','dl','equation-block','equation-figure','fig',
+        'hazardstatement','imagemap','itemgroup','note','lines','lq',
+        'msgblock','ol','p','pre','screen','simpletable','sl',
+        'syntaxdiagram','table','ul',
+        'cdWarning','cdWarnHeading','cdWarnDescr','cdWarnInstructions'
+        )"/>
 
     <xsl:template match="li" mode="first-list">
         <step>
@@ -102,19 +112,10 @@
                     <xsl:choose>
                         <xsl:when test="child::*[local-name(.) = $unallowedInCmd]">
                         	<xsl:variable name="firstBlockElement" select="child::*[local-name(.) = $unallowedInCmd][1]"/>
-                        	<cmd>
-					            <xsl:apply-templates select="$firstBlockElement/preceding-sibling::node()"/>
-					        </cmd>
-					        <info>
-					            <xsl:apply-templates select="$firstBlockElement"/>
-					            <xsl:apply-templates select="$firstBlockElement/following-sibling::node()"/>
-					        </info>
+                        	<cmd><xsl:apply-templates select="$firstBlockElement/preceding-sibling::node()"/></cmd>
+					        <info><xsl:apply-templates select="$firstBlockElement"/><xsl:apply-templates select="$firstBlockElement/following-sibling::node()"/></info>
                         </xsl:when>
-                        <xsl:otherwise>
-                            <cmd>
-                                <xsl:apply-templates select="node()"/>
-                            </cmd>  
-                        </xsl:otherwise>
+                        <xsl:otherwise><cmd><xsl:apply-templates select="node()"/></cmd></xsl:otherwise>
                     </xsl:choose>
                 </xsl:when>
                 <xsl:otherwise>
@@ -125,28 +126,17 @@
     </xsl:template>
     
     
-    <xsl:template match="b[ancestor::topic[@base='task']]">
-        <uicontrol>
-            <xsl:apply-templates/>
-        </uicontrol>
-    </xsl:template>
-    
-    <xsl:template match="ul[ancestor::cmd]">
-        <choices>
-            <xsl:apply-templates/>
-        </choices>
-    </xsl:template>
-    <xsl:template match="li[ancestor::cmd]">
-        <choice>
-            <xsl:apply-templates/>
-        </choice>
-    </xsl:template>
-    
     
     
     <!-- Handle default matching for other elements in first-list mode -->
     <xsl:template match="@*|node()" mode="first-list">
         <xsl:apply-templates select="."/>
     </xsl:template>
+    
+    
+    <xsl:template match="ul[@type='to-do-list'][preceding-sibling::*[1][self::cdWarning]]"/>
+    
+    
+    
 
     </xsl:stylesheet>

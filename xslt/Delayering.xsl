@@ -10,8 +10,8 @@
     exclude-result-prefixes="xs w wp a pic xlink"
     version="2.0">
     
-    <xsl:output method="xml" encoding="UTF-8" indent="yes"/>
-    
+    <xsl:output method="xml" encoding="UTF-8"/>
+    <xsl:strip-space elements="*"/>
     
     <xsl:template match="@* | node()">
         <xsl:copy copy-namespaces="no">
@@ -22,24 +22,25 @@
     <xsl:output method="xml" doctype-public="-//OASIS//DTD DITA Topic//EN" doctype-system="topic.dtd" indent="yes"/>
     
     <xsl:variable name="topic_id" select="topics/@filename"/>
+    <xsl:variable name="folder_name" select="topics/@folder"/>
     
-    <xsl:template match="topics[@id]">
+    <xsl:template match="topics">
         
         <xsl:variable name="Topic_Folder" select="lower-case(replace(@filename, ' ', '_'))"/>
         
         <xsl:for-each select="topic[@id]">
             <xsl:variable name="first_level_topic_id" select="lower-case(translate(@filename, ' ,.()?[]&amp;™:/%#', '_'))"/>
             <xsl:result-document
-                href="{$first_level_topic_id}/{lower-case(translate(@filename, ' ,.()?[]&amp;™:/%#', '_'))}.dita">
+                href="{$folder_name}/{lower-case(translate(@filename, ' ,.()?[]&amp;™:/%#', '_'))}.dita">
                 <xsl:copy copy-namespaces="no">
                     <xsl:apply-templates select="@*, node() except (topic[@id])"/>
                 </xsl:copy>
             </xsl:result-document>
             
-            <xsl:for-each select="topic[@id]">
+            <xsl:for-each select="topic">
                 <xsl:variable name="second_topic_level" select="lower-case(translate(@filename, ' ,.()?[]&amp;™:/%#', '_'))"/>
                 <xsl:result-document
-                    href="{$first_level_topic_id}/{$second_topic_level}/{lower-case(translate(@filename, ' ,.()?[]&amp;™:/%#', '_'))}.dita">
+                    href="{$folder_name}/{lower-case(translate(@filename, ' ,.()?[]&amp;™:/%#', '_'))}.dita">
                     <xsl:copy copy-namespaces="no">
                         <xsl:apply-templates select="@*, node() except (topic[@id])"/>
                     </xsl:copy>
@@ -48,15 +49,14 @@
                 <xsl:for-each select="topic[@id]">
                     <xsl:variable name="third_topic_level" select="lower-case(translate(@filename, ' ,.()?[]&amp;™:/%#', '_'))"/>
                     <xsl:result-document
-                        href="{$first_level_topic_id}/{$second_topic_level}/{$third_topic_level}/{lower-case(translate(@filename, ' ,.()?[]&amp;™:/%#', '_'))}.dita">
+                        href="{$folder_name}/{lower-case(translate(@filename, ' ,.()?[]&amp;™:/%#', '_'))}.dita">
                         <xsl:copy copy-namespaces="no">
                             <xsl:apply-templates select="@*, node() except (topic[@id])"/>
                         </xsl:copy>
                     </xsl:result-document>
-                    
                     <xsl:for-each select="topic[@id]">
                         <xsl:result-document
-                            href="{$first_level_topic_id}/{$second_topic_level}/{$third_topic_level}/{lower-case(translate(@filename, ' ,.()?[]&amp;™:/%#', '_'))}.dita">
+                            href="{$folder_name}/{lower-case(translate(@filename, ' ,.()?[]&amp;™:/%#', '_'))}.dita">
                             <xsl:copy copy-namespaces="no">
                                 <xsl:apply-templates select="@*, node() except (topic[@id])"/>
                             </xsl:copy>
@@ -64,88 +64,88 @@
                         
                         <xsl:for-each select="topic[@id]">
                             <xsl:result-document
-                                href="{$first_level_topic_id}/{$second_topic_level}/{$third_topic_level}/{lower-case(translate(@filename, ' ,.()?[]&amp;™:/%#', '_'))}.dita">
+                                href="{$folder_name}/{lower-case(translate(@filename, ' ,.()?[]&amp;™:/%#', '_'))}.dita">
                                 <xsl:copy copy-namespaces="no">
                                     <xsl:apply-templates select="@*, node() except (topic[@id])"/>
                                 </xsl:copy>
                             </xsl:result-document>
                         </xsl:for-each>
                     </xsl:for-each>
-                    
                 </xsl:for-each>
             </xsl:for-each>
         </xsl:for-each>
     </xsl:template>
     
-    <xsl:template match="revised"></xsl:template>
-    <xsl:template match="equation-inline">
-        <xsl:apply-templates/>
-    </xsl:template>
-    
-    
     <xsl:template match="ol">
-        <xsl:choose>
-            <xsl:when test="child::li[@base='Workstep1']">
-                <steps>
-                    <xsl:apply-templates/>
-                </steps>
-            </xsl:when>
-            <xsl:otherwise>
-                <ol>
-                    <xsl:apply-templates/>
-                </ol>
-            </xsl:otherwise>
-        </xsl:choose>
+        <ol>
+            <xsl:apply-templates/>
+        </ol>
+    </xsl:template>
+    <xsl:template match="ul|LD4-Dash4List">
+        <ul>
+            <xsl:if test="@type='to-do-list'">
+                <xsl:attribute name="type">to-do-list</xsl:attribute>
+            </xsl:if>
+            <xsl:apply-templates/>
+        </ul>
     </xsl:template>
     
-    <xsl:template match="li[@base='Workstep1'][not(ancestor::table)]">
-        <step><cmd>
+    <xsl:template match="li|list-item|LD4-Dash4">
+        <li>
             <xsl:apply-templates/>
-        </cmd></step>
+        </li>
     </xsl:template>
+    
+    <xsl:template match="//ul[parent::ullist[following-sibling::LISTING-GROUP[ancestor::topic[@base='task']]]]">
+        <p base="ul">
+            <xsl:apply-templates/>
+        </p>
+    </xsl:template>
+    
+    
+    <xsl:template match="cdWarning[following-sibling::*[1][self::ul[@type='to-do-list']]]">
+        <cdWarning>
+            <xsl:apply-templates select="@*"/>
+            <xsl:apply-templates select="node()"/>
+            
+            <!-- move the following to-do list inside -->
+            <xsl:apply-templates select="following-sibling::ul[@type='to-do-list'][1]"/>
+        </cdWarning>
+    </xsl:template>
+    
     
     <xsl:template match="fig">
-        <xsl:choose>
-            <xsl:when test="descendant::items">
-                <fig>
-                    <xsl:attribute name="id">
-                        <xsl:value-of select="legend/title/A/@ID"/>
-                    </xsl:attribute>
-                    <xsl:if test="child::*[1][self::title]">
-                        <xsl:copy-of select="title"/>
-                    </xsl:if>
-                    <xsl:apply-templates/>
-                </fig>
-            </xsl:when>
-            <xsl:otherwise>
-                <fig>
-                    <xsl:if test="legend/title/A">
-                        <xsl:attribute name="id">
-                            <xsl:value-of select="legend/title/A/@ID"/>
-                        </xsl:attribute>
-                    </xsl:if>
-                    <xsl:if test="child::*[1][self::title]">
-                        <xsl:copy-of select="title"/>
-                    </xsl:if>
-                    <xsl:if test="legend/title">
-                        <title><xsl:value-of select="."/></title>
-                    </xsl:if>
-                    <xsl:copy-of select="image"/>
-                </fig>
-            </xsl:otherwise>
-        </xsl:choose>
+        <fig>
+            <!-- preserve all attributes, e.g., id -->
+            <xsl:copy-of select="@*"/>
+            
+            <!-- First output the title element -->
+            <xsl:apply-templates select="title"/>
+            
+            <!-- Then output image element -->
+            <xsl:apply-templates select="image"/>
+            
+            <!-- Then any other child nodes if needed -->
+            <xsl:apply-templates select="node()[not(self::title or self::image)]"/>
+        </fig>
     </xsl:template>
     
     
     
-    <xsl:template match="A[@CLASS='XRef']">
-        <xsl:variable name="id" select="ancestor::topic[1]/@id"/>
-        <xref>
-            <xsl:attribute name="href">
-                <xsl:value-of select="concat('#',$id,'/', substring-after(substring-before(@href, ')'), '#id('))"/>
-            </xsl:attribute>
-            <xsl:apply-templates/>
-        </xref>
-    </xsl:template>    
+    <xsl:template match="choption[not(preceding-sibling::*[1][self::chdesc])]">
+        <xsl:text disable-output-escaping="yes">&lt;choicetable&gt;&lt;chrow&gt;</xsl:text><choption><xsl:apply-templates/></choption>
+    </xsl:template>
+    
+    <xsl:template match="chdesc[not(following-sibling::*[1][self::choption])]">
+        <chdesc><xsl:apply-templates/></chdesc><xsl:text disable-output-escaping="yes">&lt;/chrow&gt;&lt;/choicetable&gt;</xsl:text>
+    </xsl:template>
+    
+    <xsl:template match="choption[preceding-sibling::*[1][self::chdesc]]">
+        <xsl:text disable-output-escaping="yes">&lt;/chrow&gt;&lt;chrow&gt;</xsl:text><choption><xsl:apply-templates/></choption>
+    </xsl:template>
+    
+    <xsl:template match="LISTING-GROUP | ullist">
+        <xsl:apply-templates/>
+    </xsl:template>
     
 </xsl:stylesheet>

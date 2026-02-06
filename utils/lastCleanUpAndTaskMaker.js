@@ -22,6 +22,8 @@ async function lastCleanUpAndTaskMaker(outputFolderPath, userId) {
         fileProcessingPromises.push(
           processDitaFile(filePath, userId, sefFile, sefFile1)
         );
+      } else if (stats.isFile() && file.endsWith(".ditamap")) {
+        fileProcessingPromises.push(processDitaMapFile(filePath, sefFile1));
       }
     }
 
@@ -43,6 +45,19 @@ async function processDitaFile(filePath, userId, sefFile, sefFile1) {
     await fs.promises.writeFile(filePath, fileData, "utf8");
   } catch (error) {
     console.error("Error processing DITA file:", error);
+    throw error;
+  }
+}
+
+async function processDitaMapFile(filePath, sefFile1) {
+  try {
+    let fileData = await fs.promises.readFile(filePath, "utf8");
+    fileData = await performTransformation(sefFile1, fileData);
+
+    // Write the transformed data back to the same file
+    await fs.promises.writeFile(filePath, fileData, "utf8");
+  } catch (error) {
+    console.error("Error processing DITA map file:", error);
     throw error;
   }
 }

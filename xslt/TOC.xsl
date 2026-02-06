@@ -9,21 +9,15 @@
 
     <xsl:output doctype-public="-//OASIS//DTD DITA Map//EN" doctype-system="map.dtd"
         indent="yes"/>
-
-    <xsl:variable name="book_name" select="topics/title"/>
-    <xsl:variable name="Rev_Date" select="topics/topic/revised"/>
-
-    <xsl:variable name="topic_id_1" select="topics/lower-case(translate(title, ' ,.()?[]&amp;™:/%#', '_'))"/>
-
-    <xsl:variable name="Othermeta_name" select="substring-before(base-uri(), '/word/')"/>
-    <xsl:variable name="Othermeta_name1" select="tokenize($Othermeta_name, '/')[last()]"/>
+    
+    
     <xsl:variable name="name" select="topics/topic[1]/title"/>
-
+    <xsl:variable name="folder_name" select="topics/@folder"/>
     <xsl:template match="topics">
         <xsl:variable name="topic_id" select="lower-case(translate(title, ' ,.()?[]&amp;™:/%#', '_'))"/>
         <xsl:variable name="topic_uri" select="topics/@uri"/>
 
-        <xsl:result-document href="m_{//topics/@uri}.ditamap" method="xml">
+        <xsl:result-document href="{$folder_name}/{concat('m_', $folder_name)}.ditamap" method="xml">
             <map id="{generate-id()}" xml:lang="en-us">
                 <title>
                     <xsl:value-of select="$name"/>
@@ -31,35 +25,36 @@
                 
                 <xsl:for-each select="topic">
                     <xsl:variable name="subsection" select="lower-case(translate(@filename, ' ,.()?[]&amp;™:/%#', '_'))"/>
-                    <topicref href="{$subsection}/{$subsection}.dita" navtitle="{title}">
+                    <topicref href="{$subsection}.dita" navtitle="{normalize-space(title)}">
                         <xsl:if test="body[not(child::*)]">
                             <xsl:attribute name="topichead">yes</xsl:attribute>
                         </xsl:if>
+                        
                         <xsl:for-each select="topic">
                             <xsl:variable name="subsection2"
                                 select="lower-case(translate(@filename, ' ,.()?[]&amp;™:/%#', '_'))"/>
-                            <topicref href="{$subsection}/{$subsection2}/{$subsection2}.dita" navtitle="{title}">
+                            <topicref href="{$subsection2}.dita" navtitle="{normalize-space(title)}">
                                 <xsl:if test="body[not(child::*)]">
                                     <xsl:attribute name="topichead">yes</xsl:attribute>
                                 </xsl:if>
                                 <xsl:for-each select="topic">
                                     <xsl:variable name="subsection3"
                                         select="lower-case(translate(@filename, ' ,.()?[]&amp;™:/%#', '_'))"/>
-                                    <topicref href="{$subsection}/{$subsection2}/{$subsection3}/{$subsection3}.dita" navtitle="{title}">
+                                    <topicref href="{$subsection3}.dita" navtitle="{normalize-space(title)}">
                                         <xsl:if test="body[not(child::*)]">
                                             <xsl:attribute name="topichead">yes</xsl:attribute>
                                         </xsl:if>
                                         <xsl:for-each select="topic">
                                             <xsl:variable name="subsection4"
                                                 select="lower-case(translate(@filename, ' ,.()?[]&amp;™:/%#', '_'))"/>
-                                            <topicref href="{$subsection}/{$subsection2}/{$subsection3}/{$subsection4}.dita" navtitle="{title}">
+                                            <topicref href="{$subsection4}.dita" navtitle="{normalize-space(title)}">
                                                 <xsl:if test="body[not(child::*)]">
                                                     <xsl:attribute name="topichead">yes</xsl:attribute>
                                                 </xsl:if>
                                                 <xsl:for-each select="topic">
                                                     <xsl:variable name="subsection5"
                                                         select="lower-case(translate(@filename, ' ,.()?[]&amp;™:/%#', '_'))"/>
-                                                    <topicref href="{$subsection}/{$subsection2}/{$subsection3}/{$subsection4}/{$subsection5}.dita" navtitle="{title}">
+                                                    <topicref href="{$subsection5}.dita" navtitle="{normalize-space(title)}">
                                                         <xsl:if test="body[not(child::*)]">
                                                             <xsl:attribute name="topichead">yes</xsl:attribute>
                                                         </xsl:if>

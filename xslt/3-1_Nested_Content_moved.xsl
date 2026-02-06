@@ -5,12 +5,12 @@
     exclude-result-prefixes="xs xd"
     version="2.0">
     
-    <!--    <xsl:output indent="yes"/>
+    <!--<xsl:output indent="yes"/>
     <xsl:strip-space elements="*"/>-->
     
     <xsl:key name="orphan_sect_siblings" 
-        match="*[not(self::list-item)][preceding-sibling::list-item]" 
-        use="preceding-sibling::list-item[1]/generate-id()"/>
+        match="*[not(self::li)][preceding-sibling::li]" 
+        use="preceding-sibling::li[1]/generate-id()"/>
     
     <xsl:template match="@*|node()" mode="#all">
         <xsl:copy>
@@ -18,7 +18,7 @@
         </xsl:copy>
     </xsl:template>
     
-    <xsl:template match="list-item[following-sibling::*[1][not(self::list-item)]]">
+    <xsl:template match="li[following-sibling::*[1][not(self::li)]]">
         <xsl:copy>
             <xsl:apply-templates select="@*|node()"/>
             <xsl:if test="not(following-sibling::*[1][self::topic])">
@@ -31,6 +31,15 @@
         </xsl:if>
     </xsl:template>
     
-    <xsl:template match="*[not(self::list-item)][preceding-sibling::list-item]"/>
+    <xsl:template match="*[not(self::li)][preceding-sibling::li]"/>
+    
+    <xsl:template match="p [@type='bull1']">
+        <li type="bull1">
+            <xsl:apply-imports/>
+        </li>
+    </xsl:template>
+    
+    
+    
     
 </xsl:stylesheet>
