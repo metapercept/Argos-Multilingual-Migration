@@ -10,6 +10,10 @@ app.use(express.json());
 require("dotenv").config({ path: "./.env" });
 const PORT = process.env.PORT || 2500;
 const BASE = process.env.BASE;
+const CORS_ORIGINS = (process.env.CORS_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 const AdmZip = require("adm-zip");
 const {
   prepareUserDirectories,
@@ -31,7 +35,21 @@ const checkFilesInFolder = require("./utils/checkFilesInFolder");
 const lastCleanUpAndTaskMaker = require("./utils/lastCleanUpAndTaskMaker");
 const { clearTempData } = require("./utils/cacheSEFFile");
 const { getLogData, resetLogData } = require("./state/logData");
-app.use(cors());
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow non-browser requests or same-origin (no Origin header)
+      if (!origin) return callback(null, true);
+      if (CORS_ORIGINS.length === 0) return callback(null, true);
+      if (CORS_ORIGINS.includes(origin)) return callback(null, true);
+      return callback(new Error("Not allowed by CORS"));
+    },
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+    optionsSuccessStatus: 204,
+  })
+);
 app.use(fileUpload());
 
 let inputFolderDir = "input";
@@ -45,7 +63,13 @@ app.get("/", async (req, res) => {
 });
 
 app.post("/api/upload", async (req, res) => {
-  const userId = req.body.userId;
+  const rawUserId = req.body?.userId ?? req.body?.userID;
+  const userId = typeof rawUserId === "string" ? rawUserId : undefined;
+  if (!userId) {
+    return res
+      .status(400)
+      .json({ message: "userId is required", status: 400 });
+  }
 
   try {
     const userInputDir = `${inputFolderDir}/${userId}/`;
@@ -124,7 +148,13 @@ app.post("/api/upload", async (req, res) => {
 });
 
 app.post("/api/xmltodita", async (req, res) => {
-  const userId = req.body.userId;
+  const rawUserId = req.body?.userId ?? req.body?.userID;
+  const userId = typeof rawUserId === "string" ? rawUserId : undefined;
+  if (!userId) {
+    return res
+      .status(400)
+      .json({ message: "userId is required", status: 400 });
+  }
 
   let userInputDir = getInputFolderDir(userId);
   let userOutputDir = getOutputFolderDir(userId);
