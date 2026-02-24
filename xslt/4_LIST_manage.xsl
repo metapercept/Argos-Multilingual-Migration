@@ -12,28 +12,6 @@
     </xsl:template>
     
     
-    
-    
-    <!--<xsl:template match="li">
-        <xsl:choose>
-            <xsl:when test="@type='bull2' and not(preceding-sibling::li [@type='bull1']) and not(following-sibling::li [@type='bull3'])">
-                <li type="bull1">
-                    <xsl:apply-templates/>
-                </li>
-            </xsl:when>
-            <xsl:when test="@type='bull3' and not(preceding-sibling::li [@type='bull1']) and not(following-sibling::li [@type='bull2'])">
-                <li type="bull1">
-                    <xsl:apply-templates/>
-                </li>
-            </xsl:when>
-            <xsl:otherwise>
-                <li>
-                    <xsl:copy-of select="@*"/>
-                    <xsl:apply-templates/>
-                </li>
-            </xsl:otherwise>
-        </xsl:choose>
-    </xsl:template>-->
     <xsl:template match="ullist">
         <xsl:apply-templates/>
     </xsl:template>
@@ -173,5 +151,26 @@
             </xsl:otherwise>
         </xsl:choose>
     </xsl:template>
+    
+    <xsl:template match="tgroup">
+        <tgroup cols="{@cols}">
+            <xsl:call-template name="gen">
+                <xsl:with-param name="n" select="@cols"/>
+            </xsl:call-template>
+            <xsl:apply-templates/>
+        </tgroup>
+    </xsl:template>
+    
+    <xsl:template name="gen">
+        <xsl:param name="n"/>
+        <xsl:if test="$n > 0">
+            <xsl:call-template name="gen">
+                <xsl:with-param name="n" select="$n - 1"/>
+            </xsl:call-template>
+            <colspec colname="{concat('c', $n)}" colnum="{$n}"/>
+        </xsl:if>   
+    </xsl:template>
+    
+    
     
 </xsl:stylesheet>

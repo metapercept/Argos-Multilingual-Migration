@@ -15,12 +15,19 @@
         </xsl:copy>
     </xsl:template>
     
+    <xsl:strip-space elements="*"/>
+    
     
     <xsl:template match="topic">
         <xsl:choose>
             <xsl:when test="@type='1'">
                 <h1>
                     <xsl:if test="descendant::list-item">
+                        <xsl:attribute name="base">
+                            <xsl:value-of select="'task'"/>
+                        </xsl:attribute>
+                    </xsl:if>
+                    <xsl:if test="descendant::li[@type='num1']">
                         <xsl:attribute name="base">
                             <xsl:value-of select="'task'"/>
                         </xsl:attribute>
@@ -37,13 +44,6 @@
                             <xsl:value-of select="'refernce'"/>
                         </xsl:attribute>
                     </xsl:if>
-                    
-                    
-                    <!--<xsl:if test="child::title/descendant::a/@id">
-                        <xsl:attribute name="id">
-                            <xsl:value-of select="child::title/descendant::a/@id"/>
-                        </xsl:attribute>
-                    </xsl:if>-->
                     <xsl:apply-templates select="@*"/>
                     <xsl:apply-templates/>
                 </h1>
@@ -51,6 +51,11 @@
             <xsl:when test="@type='2'">
                 <h2>
                     <xsl:if test="descendant::list-item">
+                        <xsl:attribute name="base">
+                            <xsl:value-of select="'task'"/>
+                        </xsl:attribute>
+                    </xsl:if>
+                    <xsl:if test="descendant::li[@type='num1']">
                         <xsl:attribute name="base">
                             <xsl:value-of select="'task'"/>
                         </xsl:attribute>
@@ -78,6 +83,11 @@
                             <xsl:value-of select="'task'"/>
                         </xsl:attribute>
                     </xsl:if>
+                    <xsl:if test="descendant::li[@type='num1']">
+                        <xsl:attribute name="base">
+                            <xsl:value-of select="'task'"/>
+                        </xsl:attribute>
+                    </xsl:if>
                     <xsl:if test="descendant::li[@type='ec-step']">
                         <xsl:attribute name="base">
                             <xsl:value-of select="'task'"/>
@@ -94,6 +104,11 @@
                             <xsl:value-of select="'task'"/>
                         </xsl:attribute>
                     </xsl:if>
+                    <xsl:if test="descendant::li[@type='num1']">
+                        <xsl:attribute name="base">
+                            <xsl:value-of select="'task'"/>
+                        </xsl:attribute>
+                    </xsl:if>
                     <xsl:if test="descendant::li[@type='ec-step']">
                         <xsl:attribute name="base">
                             <xsl:value-of select="'task'"/>
@@ -106,6 +121,11 @@
             <xsl:when test="@type='5'">
                 <h5>
                     <xsl:if test="descendant::list-item">
+                        <xsl:attribute name="base">
+                            <xsl:value-of select="'task'"/>
+                        </xsl:attribute>
+                    </xsl:if>
+                    <xsl:if test="descendant::li[@type='num1']">
                         <xsl:attribute name="base">
                             <xsl:value-of select="'task'"/>
                         </xsl:attribute>
@@ -435,6 +455,13 @@
     
     <xsl:template match="fig[ancestor::title]|@level"/>
     
+    <!-- Remove whitespace-only text nodes -->
+    <xsl:template match="text()[not(normalize-space())]"/>
+    
+    <!-- Output normalized text for everything else -->
+    <xsl:template match="text()[normalize-space()]">
+        <xsl:value-of select="normalize-space()"/>
+    </xsl:template>
     
     
     

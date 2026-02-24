@@ -6,6 +6,7 @@ const shell = require("shelljs");
 const cors = require("cors");
 const app = express();
 app.use(express.json());
+app.set("trust proxy", 1);
 
 require("dotenv").config({ path: "./.env" });
 const PORT = process.env.PORT || 2500;
@@ -14,6 +15,9 @@ const CORS_ORIGINS = (process.env.CORS_ORIGINS || "")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
+const PRE_CLEANUP_INI_PATH = (process.env.PRE_CLEANUP_INI_PATH || "").trim();
+const PRE_CLEANUP_ROOT = (process.env.PRE_CLEANUP_ROOT || "precleanup").trim();
+const PRE_CLEANUP_ENABLED = process.env.PRE_CLEANUP_ENABLED;
 const AdmZip = require("adm-zip");
 const {
   prepareUserDirectories,
@@ -24,12 +28,14 @@ const {
 } = require("./utils/helper");
 const {
   setInputFileName,
+  setInputFolderDir,
   getInputFolderDir,
   getOutputFolderDir,
   resetTempJSONPath,
   resetUserFolderDirs,
 } = require("./state/allVeriables");
 const fileValidator = require("./utils/fileValidator");
+const { runPrecleanupJs } = require("./utils/precleanup");
 const isValidDirectory = require("./utils/ValidDirectory");
 const checkFilesInFolder = require("./utils/checkFilesInFolder");
 const lastCleanUpAndTaskMaker = require("./utils/lastCleanUpAndTaskMaker");
@@ -55,6 +61,22 @@ app.use(fileUpload());
 let inputFolderDir = "input";
 const outputFolderPath = "output";
 
+function isPrecleanupEnabled() {
+  if (typeof PRE_CLEANUP_ENABLED === "string") {
+    return PRE_CLEANUP_ENABLED.trim().toLowerCase() !== "false";
+  }
+  return true;
+}
+
+async function runPrecleanup(inputDir, outputDir) {
+  await fs.promises.mkdir(outputDir, { recursive: true });
+  await runPrecleanupJs(
+    inputDir,
+    outputDir,
+    PRE_CLEANUP_INI_PATH || undefined
+  );
+}
+
 app.get("/", async (req, res) => {
   return res.status(200).json({
     message: "ARGOS Parser API",
@@ -72,11 +94,17 @@ app.post("/api/upload", async (req, res) => {
   }
 
   try {
-    const userInputDir = `${inputFolderDir}/${userId}/`;
-    const userOutputDir = `${outputFolderPath}/${userId}/`;
+    const userInputDir = path.join(inputFolderDir, userId);
+    const userOutputDir = path.join(outputFolderPath, userId);
+    const userPrecleanupDir = path.join(PRE_CLEANUP_ROOT, userId);
 
     // Prepare user-specific directories
-    prepareUserDirectories(userId, userInputDir, userOutputDir);
+    prepareUserDirectories(
+      userId,
+      userInputDir,
+      userOutputDir,
+      userPrecleanupDir
+    );
 
     if (!req.files || !req.files.zipFile) {
       return res
@@ -119,6 +147,24 @@ app.post("/api/upload", async (req, res) => {
                 .status(400)
                 .json({ message: "No files found in the folder", status: 400 });
             } else {
+              if (isPrecleanupEnabled()) {
+                try {
+                  const inputAbs = path.resolve(userInputDir);
+                  const outputAbs = path.resolve(userPrecleanupDir);
+                  await runPrecleanup(inputAbs, outputAbs);
+                  setInputFolderDir(userId, userPrecleanupDir);
+                } catch (precleanupError) {
+                  removeUserIOFolder(userId);
+                  console.error(
+                    "Error running precleanup:",
+                    precleanupError.message
+                  );
+                  return res.status(500).json({
+                    message: "Precleanup failed",
+                    status: 500,
+                  });
+                }
+              }
               return res.status(201).json({ message: "Ok", status: 201 });
             }
           } catch (err) {
@@ -190,7 +236,18 @@ app.post("/api/xmltodita", async (req, res) => {
         await createZipFile(userOutputDir, zipFilePath, userId);
 
         // Construct download link (modify based on your hosting)
-        const downloadLink = `${BASE}/api/download/${userId}/${zipFileName}`;
+        const rawBase = (BASE || "").trim().replace(/\/+$/, "");
+        const isLocalhost =
+          /^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?$/i.test(rawBase);
+        const normalizedBase =
+          rawBase && !/^https?:\/\//i.test(rawBase)
+            ? `${req.protocol}://${rawBase}`
+            : rawBase;
+        const baseUrl =
+          normalizedBase && !isLocalhost
+            ? normalizedBase
+            : `${req.protocol}://${req.get("host")}`;
+        const downloadLink = `${baseUrl}/api/download/${userId}/${zipFileName}`;
 
         return res.status(201).json({
           message: "Files processed successfully",

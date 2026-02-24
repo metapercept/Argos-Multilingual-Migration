@@ -9,7 +9,7 @@ const {
 } = require("../state/allVeriables");
 
 // Prepare user-specific directories
-function prepareUserDirectories(userId, inputDir, outputDir) {
+function prepareUserDirectories(userId, inputDir, outputDir, precleanupDir) {
   setInputFolderDir(userId, inputDir);
   setOutputFolderDir(userId, outputDir);
 
@@ -18,23 +18,30 @@ function prepareUserDirectories(userId, inputDir, outputDir) {
 
   shell.rm("-rf", outputDir);
   shell.mkdir("-p", outputDir);
+
+  if (precleanupDir) {
+    shell.rm("-rf", precleanupDir);
+    shell.mkdir("-p", precleanupDir);
+  }
 }
 
 // Function to remove the user input and output folders
 function removeUserIOFolder(userId) {
   const userInputFolderPath = path.join("input", userId.toString());
   const userOutputFolderPath = path.join("output", userId.toString());
+  const userPrecleanupFolderPath = path.join("precleanup", userId.toString());
 
   try {
     // Remove both the input and output folders for the user
     shell.rm("-rf", userInputFolderPath);
     shell.rm("-rf", userOutputFolderPath);
+    shell.rm("-rf", userPrecleanupFolderPath);
     console.log(
-      `Folders ${userInputFolderPath} and ${userOutputFolderPath} have been removed.`
+      `Folders ${userInputFolderPath}, ${userOutputFolderPath}, and ${userPrecleanupFolderPath} have been removed.`
     );
   } catch (error) {
     console.error(
-      `Error removing folders ${userInputFolderPath} or ${userOutputFolderPath}:`,
+      `Error removing folders ${userInputFolderPath}, ${userOutputFolderPath}, or ${userPrecleanupFolderPath}:`,
       error
     );
   }

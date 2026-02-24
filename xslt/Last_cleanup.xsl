@@ -99,12 +99,12 @@
             <xsl:choose>
                 <xsl:when test="preceding-sibling::title">
                     <xsl:attribute name="href">
-                        <xsl:value-of select="concat('../graphics/com/referenced/', normalize-space(replace(substring-after(substring-before(preceding-sibling::title, ')'), '('), ' ', '_')) , '.pdf')"/>
+                        <xsl:value-of select="concat('../graphics/com/referenced/', normalize-space(replace(substring-after(substring-before(preceding-sibling::title[1], ')'), '('), ' ', '_')) , '.pdf')"/>
                     </xsl:attribute>
                 </xsl:when>
                 <xsl:when test="following-sibling::legend/title">
                     <xsl:attribute name="href">
-                        <xsl:value-of select="concat('../graphics/com/referenced/', normalize-space(replace(substring-after(substring-before(preceding-sibling::title, ')'), '('), ' ', '_')) , '.pdf')"/>
+                        <xsl:value-of select="concat('../graphics/com/referenced/', normalize-space(replace(substring-after(substring-before(preceding-sibling::title[1], ')'), '('), ' ', '_')) , '.pdf')"/>
                     </xsl:attribute>
                 </xsl:when>
                 <xsl:otherwise>
@@ -145,7 +145,7 @@
     </xsl:template>
     
     <xsl:template match="cdWarnDescr">
-        <xsl:if test="not(preceding-sibling::cdWarnHeading)">
+        <xsl:if test="not(preceding-sibling::cdWarnHeading) and not(preceding-sibling::cdWarnDescr)">
             <cdWarnHeading/>
         </xsl:if>
         <cdWarnDescr>

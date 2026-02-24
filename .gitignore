@@ -3,4 +3,5 @@ xslt/temp/*
 download/*
 input/
 output/
+precleanup/
 .vscode/
